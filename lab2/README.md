@@ -1,8 +1,8 @@
 # Integrantes
 
--Felipe Mazzeo Barbosa - RA: 10402808
--Matteo Domiciano Varnier - RA: 10390247
--Nicolas Fernandes Melnik - RA: 10402170
+-Felipe Mazzeo Barbosa - RA: 10402808 
+-Matteo Domiciano Varnier - RA: 10390247 
+-Nicolas Fernandes Melnik - RA: 10402170 
 
 # Compilar
 
