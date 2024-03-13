@@ -2,60 +2,82 @@
 #include <stdlib.h>
 #include <pthread.h>
 
-#define m 2
-#define n 2
-#define thread_count 1
+#define N 10  // Tamanho das matrizes
 
-double A[m][n];
-double x[n];
-double y[m];
+int A[N][N];
+int B[N][N];
+int C[N][N];
 
-void *Pth_mat_vect(void* rank) {
-    long my_rank = (long) rank;
-    int i, j;
-    int local_m = m / thread_count;
-    int my_first_row = my_rank * local_m;
-    int my_last_row = (my_rank + 1) * local_m - 1;
+// Função que será executada por cada thread para calcular um elemento de C
+void *multiply(void *arg) {
+    int *args = (int *)arg;
+    int row = args[0];
+    int col = args[1];
 
-    for (i = my_first_row; i <= my_last_row; i++) {
-        y[i] = 0.0;
-        for (j = 0; j < n; j++) {
-            y[i] += A[i][j] * x[j];
-            // Imprimir a linha de multiplicação com os valores de A e x
-            printf("Thread %ld: y[%d] += %lf * %lf\n", my_rank, i, A[i][j], x[j]);
-        }
+    // Inicializa o elemento da matriz C como 0
+    C[row][col] = 0;
+
+    // Calcula o elemento C[row][col] como a soma dos produtos correspondentes de A e B
+    for (int k = 0; k < N; k++) {
+        C[row][col] += A[row][k] * B[k][col];
     }
 
-    return NULL;
+    // Encerra a thread
+    pthread_exit(NULL);
+}
+
+// Função para imprimir uma matriz
+void imprimirMatriz(int M[][N]) {
+    for(int i = 0; i < N; i++) {
+        for(int j = 0; j < N; j++) {
+            printf("%d ", M[i][j]);
+        }
+        printf("\n");
+    }
 }
 
 int main() {
-    pthread_t threads[thread_count];
-    long i;
+    int valor = 1;
 
-    // Preencher com valores de exemplo a matriz A e o vetor x.
-    for (i = 0; i < m; i++) {
-        for (long j = 0; j < n; j++) {
-            A[i][j] = 2.0 * j; 
+    // Inicializando as matrizes A e B
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++) {
+            A[i][j] = valor;
+            B[i][j] = valor;
+            valor++;
         }
-        x[i] = 3.0; // Preencher com valores de exemplo
     }
 
-    // Criar as threads e executar a função Pth_mat_vect.
-    for (i = 0; i < thread_count; i++) {
-        pthread_create(&threads[i], NULL, Pth_mat_vect, (void*)i);
+    // Declara uma matriz de threads
+    pthread_t threads[N][N];
+
+    // Cria as threads para calcular cada elemento de C
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++) {
+            // Aloca memória para os argumentos da thread (linha e coluna)
+            int *args = (int *)malloc(2 * sizeof(int));
+            args[0] = i;
+            args[1] = j;
+
+            // Cria a thread chamando a função multiply com os argumentos
+            pthread_create(&threads[i][j], NULL, multiply, args);
+        }
     }
 
-    // Aguardar até que todas as threads terminem.
-    for (i = 0; i < thread_count; i++) {
-        pthread_join(threads[i], NULL);
+    // Aguarda as threads terminarem
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++) {
+            pthread_join(threads[i][j], NULL);
+        }
     }
 
-    // Agora, o vetor y contém o resultado da multiplicação da matriz A pelo vetor x.
-    printf("\n");
-    for (i = 0; i < m; i++) {
-        printf("y[%ld] = %lf\n", i, y[i]);
-    }
+    // Imprime as matrizes A, B e C
+    printf("Matriz A:\n\n");
+    imprimirMatriz(A);
+    printf("\nMatriz B:\n\n");
+    imprimirMatriz(B);
+    printf("\nMatriz Resultante C (A x B):\n\n");
+    imprimirMatriz(C);
 
     return 0;
 }
